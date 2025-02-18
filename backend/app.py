@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
+from sqlalchemy import text
 from dotenv import load_dotenv
 import os
 from config import Config
@@ -30,14 +31,26 @@ def create_app():
     Migrate(app, db)
     JWTManager(app)
 
+    # 클라우드 데이터베이스 연결 확인
+    try:
+        with app.app_context():
+            db.session.execute(text("SELECT 1"))
+        print("\n-----------------------------------")
+        print("\n✅ Database connected successfully!")
+        print("🌍 The service is now operating with an Azure MySQL database.")
+        print(f"Database URL={os.getenv("DATABASE_URL")}\n")
+        print("-----------------------------------")
+    except Exception as e:
+        print(f"❌ Database connection failed: {e}")
+
     # 블루프린트 등록 (여기에 추가!)
     from routes.auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/auth')
 
-    # 간단한 기본 라우트
+    # App route
     @app.route("/")
     def home():
-        return "Flask 백엔드가 정상적으로 실행되고 있습니다!"
+        return "Flask backend is running"
 
     return app
 
